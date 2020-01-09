@@ -12,3 +12,5 @@ The project is still ongoing and the code is still under development.
 The code is currently split into two folders.
 The initial code written at the beginning of the concept and the current working code.
 The initial code is kept in order to ensure that the main ideas from the beginning are preserved and may be removed at a future time.
+
+New script will be added by end of day 1/10/2020, so check back after that.
