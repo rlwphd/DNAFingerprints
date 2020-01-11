@@ -9,6 +9,7 @@ For example: a 10 base DNA segment of AAATTTGGGC and a 10 base DNA segment of CA
 
 The purpose of this project was to determine whether or not you could identify bacterial species and known antibiotic resistances using DNA segment data in the lossy format from Dr. Nagpal's device.
 The project is still ongoing and the code is still under development.
+
 The current working code is called CompleteCode. This code can be downloaded along with the Bacteria folder. The only thing that needs to be updated is the paths for where you want files stored to. If you open up the file, you need to adjust the path to the Bacteria folder, the path to the folder to store the simulated BOC reads (program does not create a folder), and the path to the folder to store the prediction arrays and confusion matrix arrays (program does not create a folder).
 
 To plot the confustion matrices for the data, you will need to download the Confusion_matrix file and adjust the path to the folder where you stored the confusion matrix arrays. You can also cahnge the error rate and number of reads to plot your desired confusion matrix for the specified parameters.
