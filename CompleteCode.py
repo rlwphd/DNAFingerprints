@@ -21,7 +21,7 @@ from sklearn.linear_model import SGDClassifier, PassiveAggressiveClassifier, Per
 from sklearn.naive_bayes import BernoulliNB, GaussianNB
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import confusion_matrix
-from sklearn.externals import joblib
+# from sklearn.externals import joblib
 from dask.distributed import Client, LocalCluster
 from dask_ml.model_selection import train_test_split
 from sklearn.decomposition import PCA
@@ -32,9 +32,9 @@ from collections import Counter
     want to save the DNA sequences, the files of the created BOC reads, and
     the files of the created predicition arrays and confusion matrices. '''
 # Estabilishing where things are being run and where things are being saved
-bacteria = 'C:/Usr/Bacteria/'
-local_BOC = 'C:/Usr/BOC/'
-pred_arrays = 'C:/Usr/NPY/'
+bacteria = 'C:/Users/Ryan/Documents/PythonScripts/DNAFingerprints/Bacteria/' #'C:/Usr/Bacteria/'
+local_BOC = 'C:/Users/Ryan/Documents/PythonScripts/DNAFingerprints/BOC/' #'C:/Usr/BOC/'
+pred_arrays = 'C:/Users/Ryan/Documents/PythonScripts/DNAFingerprints/NPY/' #'C:/Usr/NPY/'
 
 
 def pca_plot(data,name,dna_type,err,read):
@@ -236,9 +236,9 @@ def kmer_main(file,dna_length,kmer_range,data_index,df_Genome,df_Plasmid, resist
             species_data.extend(kmer_results)
             df_kmer = pd.DataFrame(species_data, index=data_index)
             if species_data[4] != 'Plasmid':
-                df_Genome = df_Genome.append(df_kmer.T, ignore_index=True)
+                df_Genome = pd.concat([df_Genome, df_kmer.T], ignore_index=True)
             elif species_data[4] == 'Plasmid':
-                df_Plasmid = df_Plasmid.append(df_kmer.T, ignore_index=True)
+                df_Plasmid = pd.concat([df_Plasmid, df_kmer.T], ignore_index=True)
     else:
         whole_str = str_extraction(file,start[0],start[1]-1,dna_length)
         species_data = title_extraction(header[0], resistance)
@@ -246,9 +246,9 @@ def kmer_main(file,dna_length,kmer_range,data_index,df_Genome,df_Plasmid, resist
         species_data.extend(kmer_results)
         df_kmer = pd.DataFrame(species_data, index=data_index)
         if species_data[4] != 'Plasmid':
-            df_Genome = df_Genome.append(df_kmer.T, ignore_index=True)
+            df_Genome = pd.concat([df_Genome, df_kmer.T], ignore_index=True)
         elif species_data[4] == 'Plasmid':
-            df_Plasmid = df_Plasmid.append(df_kmer.T, ignore_index=True)
+            df_Plasmid = pd.concat([df_Plasmid, df_kmer.T], ignore_index=True)
     
     type_change = {}
     for ii,name in enumerate(data_index):
@@ -283,17 +283,18 @@ def SERS_values(sers,categories,num_reads,arr,mutate,mutation):
 
     jj = 0
     while 1:
-    # Randomizing the pyramid array
-        mr = np.random.permutation(arr)
+    # Randomizing the pyramid and mutation arrays
+        mr = np.roll(arr,1,axis=0)
+        mutation = np.roll(mutation,1,axis=0)
     # Adding in the mutations
         mr = np.where(mutate > 0, mutation, mr)
     # Getting the respective kmer counts and dividing the values 
     # by the total value to get the frequencies
         for nn in range(len(num_reads)):
         # Setting the limits for how much of the sequence it's using
-            if num_reads[nn] > 10000:
-                ff = 10000
-                max_depth = int(num_reads[nn]/10000)
+            if num_reads[nn] > 1000:
+                ff = 1000
+                max_depth = int(num_reads[nn]/1000)
             else:
                 ff = num_reads[nn]
                 max_depth = 1 
@@ -316,15 +317,15 @@ def SERS_reads(dna_length,df,group,DNAtype,data_categories,bias,num_training_sam
     # Getting just the probility values from the kmer counts
         prob = df_prob.iloc[ii,:].values
     # Getting the probility for the largest pyramid of interest and setting the data type
-        read = np.random.RandomState(seed=231).choice(len(data_categories),(int(2*max(num_reads)/10000),10000),p=prob)
+        read = rng.choice(len(data_categories),(int(max(2*max(num_reads)/1000,num_training_samples)),1000),p=prob)
         read = np.stack([read for _ in range(len(error_rate))],axis=1)
         
     # Creating the mutation array
-        mutate = np.zeros((int(2*max(num_reads)/10000),len(error_rate),10000),dtype=np.int16)
+        mutate = np.zeros((int(max(2*max(num_reads)/1000,num_training_samples)),len(error_rate),1000),dtype=np.int16)
         for int_mut,mut in enumerate(error_rate):
-            mutations = np.concatenate([np.random.RandomState(seed=123).choice([0,1],min(num_reads),p=[1-mut,mut]) for _ in range(int(2*max(num_reads)/min(num_reads)))]).reshape((-1,10000))
+            mutations = np.concatenate([rng.choice([0,1],min(num_reads),p=[1-mut,mut]) for _ in range(int(max(2*max(num_reads)/1000,num_training_samples)/min(num_reads)))]).reshape((-1,1000))
             mutate[:,int_mut,:] = mutations
-        mutation = np.random.RandomState(seed=321).choice(len(data_categories),(int(2*max(num_reads)/10000),10000),p=bias)
+        mutation = rng.choice(len(data_categories),(int(max(2*max(num_reads)/1000,num_training_samples)),1000),p=bias)
         mutation = np.stack([mutation for _ in range(len(error_rate))],axis=1)
         
     # Getting the training samples for the species
@@ -361,6 +362,8 @@ num_training_samples = 1000
 error_rate = [0,0.01,0.05,0.1,0.25,0.33,0.5,0.75,0.9,1]
 # number of optical sequencing reads
 num_reads = [100,1000,10000,100000,1000000]
+# creating the random number generator to be used in the process
+rng = np.random.default_rng(321)
 
 # creating the correct tuples for how many A, T, G and C's are in each bin
 kmer_range = [(aa, tt, gg, cc) for aa in range(dna_length + 1) for tt in range(dna_length + 1) for gg in range(dna_length + 1) for cc in range(dna_length + 1) if aa + tt + cc + gg == dna_length]
